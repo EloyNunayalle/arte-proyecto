@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Museo de Profesiones Extintas - Archivo Laboral 2080</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- ROBOT GUÍA v5 -->
+    <div id="rbot-bubble">
+        <div id="rbot-bubble-name">🤖 UNIDAD GUÍA N-01</div>
+        <span id="rbot-bubble-text"></span>
+    </div>
+
+    <div id="rbot-panel">
+        <div class="rp-title">🤖 GUÍA N-01 <button onclick="rbotClosePanel()">✕</button></div>
+        <div class="rp-row"><span>Velocidad</span><input type="range" id="rs-vel" min="0.6" max="1.8" step="0.1" value="0.9" oninput="rbotApplyCfg()"></div>
+        <div class="rp-row"><span>Tono</span><input type="range" id="rs-tono" min="0.5" max="1.8" step="0.1" value="1.0" oninput="rbotApplyCfg()"></div>
+        <div class="rp-row"><span>Volumen</span><input type="range" id="rs-vol" min="0.1" max="1.0" step="0.1" value="1.0" oninput="rbotApplyCfg()"></div>
+        <div class="rp-row" style="flex-direction:column;align-items:flex-start;gap:4px;"><span>Voz</span><select id="rs-voz" onchange="rbotChangeVoice()"></select></div>
+        <hr class="rp-divider">
+            <div class="rp-trow"><span>Narración automática</span><div class="rp-toggle on" id="rs-auto" onclick="rbotToggleAuto()"></div></div>
+            <div class="rp-trow"><span>Música al terminar</span><div class="rp-toggle on" id="rs-music" onclick="rbotToggleMusic()"></div></div>
+            <div class="rp-trow"><span>Silenciar voz</span><div class="rp-toggle" id="rs-mute" onclick="rbotToggleMute()"></div></div>
+        <button class="rp-btn" onclick="rbotReplay()">↺ Repetir narración actual</button>
+        <button class="rp-btn rp-btn-pink" onclick="rbotOpenSearch()" style="margin-top:6px;">✦ Agregar profesión con IA</button>
+    </div>
+    <div id="rbot-fab" onclick="rbotFabClick()" title="Guía de voz">🤖</div>
+
+    <!-- Modal: Buscar profesión con IA -->
+    <div id="rbot-search-modal">
+        <div class="rsm-card">
+            <span class="rsm-robot" id="rsm-robot">🤖</span>
+            <div class="rsm-title">CONSULTA AL ARCHIVO</div>
+            <div class="rsm-sub">Escribe una profesión y la IA generará su expediente del año 2080</div>
+            <input class="rsm-input" id="rsm-input" type="text" placeholder="Ej: Periodista, Abogado, Piloto de avión..." maxlength="60"
+                onkeydown="if(event.key==='Enter') rbotSearchProf()">
+            <div class="rsm-btns">
+                <button class="rsm-btn rsm-btn-go" id="rsm-go-btn" onclick="rbotSearchProf()">▶ Generar expediente</button>
+                <button class="rsm-btn rsm-btn-cancel" onclick="rbotCloseSearch()">Cancelar</button>
+            </div>
+            <div class="rsm-status" id="rsm-status"></div>
+            <div class="rsm-progress" id="rsm-progress"><div class="rsm-progress-bar" id="rsm-progress-bar"></div></div>
+            <div class="rsm-log" id="rsm-log"></div>
+            <div class="rsm-result" id="rsm-result">
+                <div class="rsm-res-title" id="rsm-res-title"></div>
+                <div class="rsm-res-text" id="rsm-res-text"></div>
+                <button class="rsm-add-btn" id="rsm-add-btn" onclick="rbotAddToMuseo()">+ Añadir al Museo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GALERÍA -->
+    <div id="gallery-modal">
+        <div class="gal-header">
+            <div class="gal-header-title" id="gal-title">ARCHIVO VISUAL</div>
+            <button class="gal-close-btn" onclick="closeGallery()">✕ Cerrar Archivo</button>
+        </div>
+        <div class="gal-body" id="gal-body">
+            <div class="gal-loading">Cargando archivo visual...</div>
+        </div>
+    </div>
+
+    <!-- Filtro estético CRT del año 2080 -->
+    <div class="crt-overlay"></div>
+
+    <!-- Red neuronal de fondo en Canvas -->
+    <canvas id="network-canvas"></canvas>
+
+    <div class="viewport-container" id="main-viewport">
+        <!-- BARRA DE ESTADO -->
+        <div class="system-bar">
+            <div>ARCHIVO_NET_ART // RECLUTADOR_AUTOMATIZADO_v12.8</div>
+            <div class="system-status">
+                <button class="audio-toggle" id="audio-btn" onclick="toggleAudio()">SONIDO: ACTIVADO</button>
+                <div class="equalizer-bar-container" id="eq-container">
+                    <div class="eq-bar" style="animation-duration: 0.8s; animation-delay: 0.1s;"></div>
+                    <div class="eq-bar" style="animation-duration: 0.5s; animation-delay: 0.3s;"></div>
+                    <div class="eq-bar" style="animation-duration: 0.7s; animation-delay: 0s;"></div>
+                    <div class="eq-bar" style="animation-duration: 0.6s; animation-delay: 0.2s;"></div>
+                </div>
+                <div class="status-dot"></div>
+                <span>SISTEMA ONLINE</span>
+            </div>
+        </div>
+
+        <!-- PANTALLA 1: INICIO -->
+        <div class="screen screen-inicio active" id="screen-inicio">
+            <span class="tag-year">Año 2080</span>
+            <div class="glitch-wrapper">
+                <h1 class="glitch-title" id="main-glitch-title">MUSEO DE<br>PROFESIONES EXTINTAS</h1>
+            </div>
+            <p class="intro-desc">Obra de Net Art interactiva. Un archivo laboral histórico que invita a reflexionar sobre la transición del trabajo humano y el valor de nuestras tareas frente a la automatización absoluta.</p>
+            <button class="cyber-btn" onclick="startExperience()">Entrar al Museo</button>
+        </div>
+
+        <!-- PANTALLA GUÍA DE PASOS -->
+        <div class="screen screen-pasos" id="screen-pasos">
+            <div>
+                <div class="pasos-titulo">GUÍA DE RECORRIDO</div>
+                <div class="pasos-sub" style="margin-top:6px;">¿Cómo navegar el archivo laboral del año 2080?</div>
+            </div>
+            <div class="pasos-grid">
+                <div class="paso-card">
+                    <div class="paso-num">01</div>
+                    <div class="paso-icon">🏛️</div>
+                    <div class="paso-titulo">Explorar el Museo</div>
+                    <div class="paso-desc">Visita las Salas de Exhibición y abre los expedientes históricos de 6 profesiones extintas. El robot guía narrará cada archivo. También puedes ver la galería de imágenes de cada profesión.</div>
+                    <button class="paso-btn" onclick="goToScreen('screen-museo')">Ir al Museo →</button>
+                </div>
+                <div class="paso-card">
+                    <div class="paso-num">02</div>
+                    <div class="paso-icon">🤖</div>
+                    <div class="paso-titulo">Evaluar Automatización</div>
+                    <div class="paso-desc">Selecciona una profesión y ejecuta el algoritmo de análisis. Descubre tarea por tarea qué porcentaje fue reemplazado por inteligencia artificial y accede al informe de exclusión.</div>
+                    <button class="paso-btn" onclick="goToScreen('screen-entrevista')">Ir a Evaluación →</button>
+                </div>
+                <div class="paso-card">
+                    <div class="paso-num">03</div>
+                    <div class="paso-icon">✦</div>
+                    <div class="paso-titulo">Agregar Profesión</div>
+                    <div class="paso-desc">Propone cualquier profesión al archivo histórico. El sistema generará su expediente distópico del año 2080 con galería de imágenes incluida y la añadirá al museo.</div>
+                    <button class="paso-btn paso-btn-pink" onclick="rbotOpenSearch()">Proponer Profesión →</button>
+                </div>
+            </div>
+            <button class="cyber-btn" onclick="goToScreen('screen-museo')" style="margin-top:6px;">Comenzar Recorrido</button>
+        </div>
+
+        <!-- PANTALLA 2: EL MUSEO -->
+        <div class="screen screen-museo" id="screen-museo">
+            <div class="section-header">
+                <h2>SALAS DE EXHIBICIÓN <span id="ia-counter" style="display:none">+0 IA</span></h2>
+                <p>Seleccione un expediente de la base de datos histórica del siglo XXI</p>
+                <button onclick="rbotOpenSearch()" style="
+                    margin-top:12px;
+                    font-family:var(--font-brand);
+                    font-size:10px;
+                    letter-spacing:2px;
+                    padding:7px 18px;
+                    background:rgba(255,0,127,0.08);
+                    border:1px solid rgba(255,0,127,0.5);
+                    color:var(--neon-pink);
+                    border-radius:6px;
+                    cursor:pointer;
+                    text-transform:uppercase;
+                    transition:all 0.2s;
+                " onmouseover="this.style.background='rgba(255,0,127,0.18)'"
+                   onmouseout="this.style.background='rgba(255,0,127,0.08)'">
+                    ✦ Proponer profesión al archivo IA
+                </button>
+            </div>
+
+            <div class="grid-profesiones">
+                <div class="card-profesion" onclick="openExpediente('civil')">
+                    <button class="card-gallery-btn" onclick="event.stopPropagation();openGallery('civil')">📷 Galería</button>
+                    <span class="card-icon">🏗️</span>
+                    <span class="card-name">Ingeniero Civil</span>
+                </div>
+                <div class="card-profesion" onclick="openExpediente('arq')">
+                    <button class="card-gallery-btn" onclick="event.stopPropagation();openGallery('arq')">📷 Galería</button>
+                    <span class="card-icon">🏛️</span>
+                    <span class="card-name">Arquitecto</span>
+                </div>
+                <div class="card-profesion" onclick="openExpediente('cont')">
+                    <button class="card-gallery-btn" onclick="event.stopPropagation();openGallery('cont')">📷 Galería</button>
+                    <span class="card-icon">📊</span>
+                    <span class="card-name">Contador</span>
+                </div>
+                <div class="card-profesion" onclick="openExpediente('dis')">
+                    <button class="card-gallery-btn" onclick="event.stopPropagation();openGallery('dis')">📷 Galería</button>
+                    <span class="card-icon">🎨</span>
+                    <span class="card-name">Diseñador</span>
+                </div>
+                <div class="card-profesion" onclick="openExpediente('prof')">
+                    <button class="card-gallery-btn" onclick="event.stopPropagation();openGallery('prof')">📷 Galería</button>
+                    <span class="card-icon">👨‍🏫</span>
+                    <span class="card-name">Profesor</span>
+                </div>
+                <div class="card-profesion" onclick="openExpediente('med')">
+                    <button class="card-gallery-btn" onclick="event.stopPropagation();openGallery('med')">📷 Galería</button>
+                    <span class="card-icon">🩺</span>
+                    <span class="card-name">Médico General</span>
+                </div>
+            </div>
+
+            <!-- MODAL EXPEDIENTE -->
+            <div class="expediente-panel" id="expediente-panel">
+                <div class="expediente-content">
+                    <div class="expediente-header">
+                        <span class="expediente-name" id="exp-title">INGENIERO CIVIL</span>
+                        <span class="expediente-date" id="exp-years">2020 - ?</span>
+                    </div>
+                    <div class="expediente-grid">
+                        <div class="hologram-viewport" id="exp-hologram-container">
+                            <img id="exp-image" class="hologram-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Registro de profesión">
+                        </div>
+                        <div>
+                            <div class="expediente-body" id="exp-text">
+                                Cargando información del registro histórico...
+                            </div>
+                            <div style="text-align: right;">
+                                <button class="btn-close-expediente" onclick="closeExpediente()">Cerrar Expediente</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: ENTREVISTA IA -->
+        <div class="screen screen-entrevista" id="screen-entrevista">
+            <div class="ai-terminal-header" style="flex-shrink: 0;">
+                <span class="ai-title">EVALUACIÓN DE AUTOMATIZACIÓN DE TAREAS</span>
+                <span style="color: var(--neon-pink); font-size: 11px; letter-spacing: 1px;">ALGORITMO ANALÍTICO DE EFICIENCIA</span>
+            </div>
+
+            <div class="terminal-grid">
+                <div class="terminal-controls">
+                    <div>
+                        <div class="prompt-label">Seleccione una profesión para el análisis:</div>
+                        <div class="select-list">
+                            <button class="select-item-btn" id="btn-sel-civil" onclick="selectProfession('civil')">
+                                <span>Ingeniero Civil</span>
+                                <span>➔</span>
+                            </button>
+                            <button class="select-item-btn" id="btn-sel-arq" onclick="selectProfession('arq')">
+                                <span>Arquitecto</span>
+                                <span>➔</span>
+                            </button>
+                            <button class="select-item-btn" id="btn-sel-cont" onclick="selectProfession('cont')">
+                                <span>Contador</span>
+                                <span>➔</span>
+                            </button>
+                            <button class="select-item-btn" id="btn-sel-dis" onclick="selectProfession('dis')">
+                                <span>Diseñador Gráfico</span>
+                                <span>➔</span>
+                            </button>
+                            <button class="select-item-btn" id="btn-sel-prof" onclick="selectProfession('prof')">
+                                <span>Profesor</span>
+                                <span>➔</span>
+                            </button>
+                            <button class="select-item-btn" id="btn-sel-med" onclick="selectProfession('med')">
+                                <span>Médico General</span>
+                                <span>➔</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="cyber-btn" id="btn-start-evaluation" style="width: 100%; display: none;" onclick="startAiAnalysis()">Iniciar Evaluación</button>
+                </div>
+
+                <div class="terminal-console">
+                    <div class="console-scanner" id="console-scanner"></div>
+                    <div class="console-status" id="console-status">ANALIZANDO FUNCIONES...</div>
+                    <div class="analysis-logs" id="analysis-logs">
+                        <div style="color: #64748b; font-style: italic;">Esperando selección de perfil laboral para iniciar descomposición y escaneo...</div>
+                    </div>
+                    <button class="btn-console-verdict" id="btn-console-verdict" onclick="transicionAFinal()">[ Acceder al informe de exclusión ]</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: RESULTADO FINAL -->
+        <div class="screen screen-resultado" id="screen-resultado">
+            <div class="resultado-layout">
+                <div class="resultado-izq">
+                    <div class="res-percentage" id="res-percentage-val">78%</div>
+                    <p style="text-transform: uppercase; letter-spacing: 3px; color: var(--neon-pink); font-weight: 700;">de funciones automatizables</p>
+                    
+                    <div class="res-verdict">Solicitud Rehusada</div>
+                    
+                    <p class="res-subtitle">"Existe una alternativa automatizada más eficiente para esta posición en la red corporativa global."</p>
+        
+                    <div class="final-reflection">
+                        <span class="reflection-highlight">Usted no fue reemplazado.</span>
+                        <span class="reflection-muted">Sus tareas sí.</span>
+                    </div>
+                </div>
+
+                <div class="resultado-der">
+                    <div class="reporte-titulo" id="reporte-nombre-profesion">Reporte de Auditoría Laboral</div>
+                    <div class="analysis-logs" id="result-breakdown-logs">
+                    </div>
+                </div>
+            </div>
+
+            <button class="cyber-btn" style="margin-top: 25px;" onclick="resetProject()">Volver a Evaluar</button>
+        </div>
+
+        <!-- PIE DE NAVEGACIÓN -->
+        <div class="footer-nav">
+            <div>MUSEO DE PROFESIONES EXTINTAS v1.3 // NET ART INTERACTIVO</div>
+            <div>
+                <button class="btn-nav" id="footer-btn-left" onclick="handleFooterLeft()">Inicio</button>
+                <span style="margin: 0 10px;">|</span>
+                <button class="btn-nav" id="footer-btn-right" onclick="handleFooterRight()">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/env.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/museum.js"></script>
+    <script src="js/interview.js"></script>
+    <script src="js/robot.js"></script>
+</body>
+</html>
